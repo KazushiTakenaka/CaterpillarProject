@@ -11,14 +11,13 @@ ESPNowManager::ESPNowManager() : isPaired(false) {}
  * @return bool 初期化が成功した場合はtrue、失敗した場合はfalseを返します。
  */
 bool ESPNowManager::init() {
-    // ESP-NOWを初期化します
     if (esp_now_init() != ESP_OK) {
         Serial.println("ESP-NOW initialization failed");
-        return false; // 初期化失敗
+        return false;
     } else {
         Serial.println("ESP-NOW initialization successful");
-        delay(500); // 初期化後に少し待機します (安定化のため)
-        return true; // 初期化成功
+        delay(500);
+        return true;
     }
 }
 
@@ -37,24 +36,22 @@ bool ESPNowManager::pairDevice(const uint8_t *mac_addr, int channel, bool autoCh
     peerInfo.channel = autoChannel ? WiFi.channel() : channel;
     peerInfo.encrypt = false; // 暗号化は使用しません
 
-    // ペアリングを試みます (最大15回リトライ)
-    int retryCount = 0; // 再試行回数をカウントします
+    int retryCount = 0;
     esp_err_t addStatus;
     while ((addStatus = esp_now_add_peer(&peerInfo)) != ESP_OK && retryCount < 15) {
         Serial.printf("Pairing failed (Error: %d). Retrying...\n", addStatus);
-        delay(500); // 再試行前に500ms待機します
+        delay(500);
         retryCount++;
     }
 
-    // ペアリング結果を確認します
     if (addStatus != ESP_OK) {
         Serial.println("Pairing failed after multiple retries.");
         Serial.println("Could not connect.");
-        isPaired = false; // ペアリング失敗フラグを設定します
+        isPaired = false;
     } else {
         Serial.println("Pairing successful");
-        isPaired = true; // ペアリング成功フラグを設定します
+        isPaired = true;
     }
 
-    return isPaired; // ペアリング結果を返します
+    return isPaired;
 }

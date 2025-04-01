@@ -42,22 +42,20 @@ Caterpillar::Caterpillar(int in1, int in2, int in3, int in4, int buzzer, int mot
  * @brief モーター1を前進方向に回転させます。
  * @param forward_int1 [in] モーターの速度 (0-255)。
  * @note この実装ではIN1, IN2両方に同じPWM値を出力します。
- * モータードライバによっては動作が異なる場合があります。
  */
 void Caterpillar::forward1(int forward_int1) {
-    ledcWrite(motorChannel1, forward_int1); // IN1ピンに速度を出力
-    ledcWrite(motorChannel2, forward_int1); // IN2ピンにも同じ速度を出力 (ドライバ依存)
+    ledcWrite(motorChannel1, forward_int1);
+    ledcWrite(motorChannel2, forward_int1);
 }
 
 /**
  * @brief モーター1を後進方向に回転させます。
- * @param backward_int1 [in] モーターの速度 (0-255)。
+ * @param backward_int1 [in] モーターの速度 (0-255)
  * @note この実装ではIN1をLOW(0)にし、IN2にPWM値を出力します。
- * モータードライバによっては動作が異なる場合があります。
  */
 void Caterpillar::backward1(int backward_int1) {
-    ledcWrite(motorChannel1, 0);             // IN1ピンをLOWに
-    ledcWrite(motorChannel2, backward_int1); // IN2ピンに速度を出力
+    ledcWrite(motorChannel1, 0);
+    ledcWrite(motorChannel2, backward_int1);
 }
 
 /**
@@ -65,8 +63,8 @@ void Caterpillar::backward1(int backward_int1) {
  * 両方の制御ピンへの出力を0にします。
  */
 void Caterpillar::stop1() {
-    ledcWrite(motorChannel1, 0); // IN1ピンをLOWに
-    ledcWrite(motorChannel2, 0); // IN2ピンをLOWに
+    ledcWrite(motorChannel1, 0);
+    ledcWrite(motorChannel2, 0);
 }
 
 /**
@@ -75,8 +73,8 @@ void Caterpillar::stop1() {
  * @note モーター1と同様の実装です。
  */
 void Caterpillar::forward2(int forward_int2) {
-    ledcWrite(motorChannel3, forward_int2); // IN3ピンに速度を出力
-    ledcWrite(motorChannel4, forward_int2); // IN4ピンにも同じ速度を出力 (ドライバ依存)
+    ledcWrite(motorChannel3, forward_int2);
+    ledcWrite(motorChannel4, forward_int2);
 }
 
 /**
@@ -85,16 +83,16 @@ void Caterpillar::forward2(int forward_int2) {
  * @note モーター1と同様の実装です。
  */
 void Caterpillar::backward2(int backward_int2) {
-    ledcWrite(motorChannel3, 0);             // IN3ピンをLOWに
-    ledcWrite(motorChannel4, backward_int2); // IN4ピンに速度を出力
+    ledcWrite(motorChannel3, 0);
+    ledcWrite(motorChannel4, backward_int2); 
 }
 
 /**
  * @brief モーター2を停止させます。
  */
 void Caterpillar::stop2() {
-    ledcWrite(motorChannel3, 0); // IN3ピンをLOWに
-    ledcWrite(motorChannel4, 0); // IN4ピンをLOWに
+    ledcWrite(motorChannel3, 0);
+    ledcWrite(motorChannel4, 0);
 }
 
 /**
@@ -102,7 +100,7 @@ void Caterpillar::stop2() {
  * @note 現在は周波数1000Hz固定です。
  */
 void Caterpillar::buzzerOn() {
-    ledcWriteTone(buzzerChannel, 1000); // 約1kHzのトーンを出力します
+    ledcWriteTone(buzzerChannel, 1000);
 }
 
 /**
