@@ -26,7 +26,7 @@ const int motorChannel2 = 1; // モーター1用LEDCチャンネル
 const int motorChannel3 = 2; // モーター2用LEDCチャンネル
 const int motorChannel4 = 3; // モーター2用LEDCチャンネル
 const int buzzerChannel = 4; // ブザー用LEDCチャンネル
-const int redLedChannel = 5; // 赤色LED用LEDCチャンネル
+const int whiteLedChannel = 5; // 白色LED用LEDCチャンネル
 const int blueLedChannel = 6;// 青色LED用LEDCチャンネル
 
 /* --- 関数のプロトタイプ宣言です --- */
@@ -99,9 +99,20 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
  * シリアル通信、Wi-Fi、ESP-NOWの初期化とペアリングを行います。
  */
 void setup() {
-  Serial.begin(115200); 
+  Serial.begin(115200);
   delay(1000);
   Serial.println("setup start");
+
+  // BLUE_LEDをLEDCで制御するように設定
+  const int freq = 5000; // PWM周波数
+  const int resolution = 8; // PWM分解能
+  ledcSetup(blueLedChannel, freq, resolution);
+  ledcAttachPin(BLUE_LED, blueLedChannel);
+  ledcWrite(blueLedChannel, 0);
+  // WHITE_LEDをLEDCで制御するように設定
+  ledcSetup(whiteLedChannel, freq, resolution);
+  ledcAttachPin(WHITE_LED, whiteLedChannel);
+  ledcWrite(whiteLedChannel, 0);
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -120,8 +131,14 @@ void setup() {
       esp_now_register_send_cb(OnDataSent);
       esp_now_register_recv_cb(OnDataRecv);
       espNowManager.pairDevice(receiver_mac);
+      if (espNowManager.isPaired) {
+        ledcWrite(blueLedChannel, 255); // ペアリング成功で点灯
+      } else {
+        ledcWrite(blueLedChannel, 0); // ペアリング失敗で消灯
+      }
   } else {
       Serial.println("ESP-NOW initialization failed!");
+      ledcWrite(blueLedChannel, 0);
   }
   Serial.println("setup finish");
 }
@@ -141,6 +158,8 @@ const int interval_1 = 20;
 int firstStep = 0;
 // ESP-NOWの通信ロス回数をカウントする変数です
 int lostCount = 0;
+// 通信が確立されたかどうかを示すフラグです
+bool isCommunicationEstablished = false;
 // スライダー1の生の値と変換後の速度です
 int rawSlideVal_1 = 0;
 int transformedSpeed_1 = 0;
@@ -162,11 +181,12 @@ void loop() {
   if (currentMillis - previousMillis >= interval_1) {
     previousMillis = currentMillis; // 実行時刻を更新します
     battery_value = getVoltage();
-    // Serial.print(battery_value);
+    Serial.print(battery_value); Serial.println(" mV");
 
     /* ↓ここからメイン処理です↓ */
     // ESP-NOWでペアリング済みか確認します
     if (espNowManager.isPaired) {
+      ledcWrite(blueLedChannel, 255); // ペアリング中は点灯
       // 送信データを設定します (現在は固定値、必要に応じて変更してください)
       sendData.val1 = battery_value;
       sendData.val2 = 2; sendData.val3 = 3; sendData.val4 = 4; sendData.val5 = 5;
@@ -204,7 +224,7 @@ void loop() {
       // SW1が押されたら(0)ブザーを鳴らし、離されたら(1)止めます
       if (receivedData.sw1 == 0) {
         if (firstStep == 0) {
-          caterpillar.buzzerOff();
+          caterpillar.buzzerOn();
           firstStep = 1;
         } else if (firstStep == 1) {
         }
@@ -212,34 +232,37 @@ void loop() {
         caterpillar.buzzerOff();
         firstStep = 0;
       }
+
+      // データを受信したか確認します (ペアリング中のみ実行)
+      if (receivedDataLength > 0) {
+        # if 1
+        Serial.print("Recv Data: ");
+        Serial.print(receivedData.slideVal1);Serial.print(" ");
+        Serial.print(receivedData.slideVal2);Serial.print(" ");
+        // ... (他のデータも同様) ...
+        Serial.println(receivedData.sw8);
+        # endif
+        receivedDataLength = 0; // 受信データ長をリセットします
+        lostCount = 0;          // 通信ロス回数カウントをリセットします
+      } else {
+        lostCount++;
+        if (lostCount > 10) { // 10回 * 20ms = 200ms程度受信がなければロスと判断
+          // ペアリングされていない場合の処理です (ブリージングエフェクト)
+          // 2000ms (2秒)周期で明るさを計算します
+          float rad = (millis() % 2000) / 2000.0 * 2.0 * PI;
+          // sinカーブを使い、0-255の範囲で滑らかな明るさの変化を生成します
+          int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
+          ledcWrite(blueLedChannel, brightness);
+          caterpillar.stop1();
+          caterpillar.stop2();
+          caterpillar.buzzerOff();
+        }
+      }
     } else {
-      // ペアリングされていない場合の処理です
-      Serial.println("Not paired. Cannot send data.");
       // 安全のためモーターとブザーを停止します
       caterpillar.stop1();
       caterpillar.stop2();
       caterpillar.buzzerOff();
-    }
-
-    // データを受信したか確認します
-    if (receivedDataLength > 0) {
-      # if 0
-      Serial.print("Recv Data: ");
-      Serial.print(receivedData.slideVal1);Serial.print(" ");
-      Serial.print(receivedData.slideVal2);Serial.print(" ");
-      // ... (他のデータも同様) ...
-      Serial.println(receivedData.sw8);
-      # endif
-      receivedDataLength = 0; // 受信データ長をリセットします
-      lostCount = 0;          // 通信ロス回数カウントをリセットします
-    } else {
-      lostCount++;
-      if (lostCount > 10) { // 10回 * 20ms = 200ms程度受信がなければロスと判断
-        Serial.println("Communication lost!");
-        caterpillar.stop1();
-        caterpillar.stop2();
-        caterpillar.buzzerOff();
-      }
     }
   }
 }
@@ -256,7 +279,7 @@ int getVoltage() {
   int voltage_value = analogRead(BATTERY);
   // 分圧抵抗の値 (実際の回路に合わせてください)
   const int R1 = 10000;
-  const int R2 = 10000;
+  const int R2 = 20000;
 
   // 電圧を計算します (ESP32のADCは3.3V基準、12bit分解能(0-4095))
   // 計算式: Vout = Vin * R2 / (R1 + R2) -> Vin = Vout * (R1 + R2) / R2
