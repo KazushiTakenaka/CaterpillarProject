@@ -182,6 +182,12 @@ void loop() {
     previousMillis = currentMillis; // 実行時刻を更新します
     battery_value = getVoltage();
     Serial.print(battery_value); Serial.println(" mV");
+    if (battery_value < 330) {
+      // バッテリー電圧が300mV未満の場合、白色LEDを点灯して警告します
+      ledcWrite(whiteLedChannel, 255); // 白色LEDを最大輝度で点灯
+    } else {
+      ledcWrite(whiteLedChannel, 0); // 白色LEDを消灯
+    }
 
     /* ↓ここからメイン処理です↓ */
     // ESP-NOWでペアリング済みか確認します
@@ -236,11 +242,11 @@ void loop() {
       // データを受信したか確認します (ペアリング中のみ実行)
       if (receivedDataLength > 0) {
         # if 1
-        Serial.print("Recv Data: ");
-        Serial.print(receivedData.slideVal1);Serial.print(" ");
-        Serial.print(receivedData.slideVal2);Serial.print(" ");
+        // Serial.print("Recv Data: ");
+        // Serial.print(receivedData.slideVal1);Serial.print(" ");
+        // Serial.print(receivedData.slideVal2);Serial.print(" ");
         // ... (他のデータも同様) ...
-        Serial.println(receivedData.sw8);
+        // Serial.println(receivedData.sw8);
         # endif
         receivedDataLength = 0; // 受信データ長をリセットします
         lostCount = 0;          // 通信ロス回数カウントをリセットします
