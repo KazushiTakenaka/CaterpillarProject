@@ -54,43 +54,21 @@ ESP-NOWプロトコルを使用して、リモートコントローラーから�
 ### 1. 開発環境
 本プロジェクトは [PlatformIO](https://platformio.org/) を使用して開発されています。Visual Studio CodeにPlatformIO IDE拡張機能をインストールしてください。
 
-### 2. MACアドレスの設定
-本機が通信する相手（受信側/リモコン）のMACアドレスを設定する必要があります。
+### 2.  **コントローラーのMACアドレスを設定する:**
+`Secret.h`と`Secret.cpp`を開きます。`Secret.h`でコントローラーデバイスのMACアドレスを定義できます。`Secret.cpp`にコントローラーデバイスのMACアドレスを入力する必要があります。
+src/ディレクトリに移動させます。
 
-1. `src` ディレクトリに `Secret.h` という名前の新しいファイルを作成します。
-2. 以下の内容を `Secret.h` にコピーし、`XX:XX:XX:XX:XX:XX` の部分を実際の受信側のMACアドレスに書き換えてください。
-
+**`src/Secret.h`**
 ```cpp
-#ifndef SECRET_H
-#define SECRET_H
-
-// 受信側ESP32のMACアドレスに書き換えてください
-#define MAC_ADDRESS "XX:XX:XX:XX:XX:XX"
-
-// --- 以下は自動変換用のコードなので変更しないでください ---
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-
-static uint8_t MAC_ADDRESS_BYTE[6];
-
-static void mac_str_to_uint8(const char* mac_str, uint8_t* mac_byte) {
-    sscanf(mac_str, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-           &mac_byte[0], &mac_byte[1], &mac_byte[2],
-           &mac_byte[3], &mac_byte[4], &mac_byte[5]);
-}
-
-// MACアドレス文字列をバイト配列に変換する処理を一度だけ行う
-class MacAddressInitializer {
-public:
-    MacAddressInitializer() {
-        mac_str_to_uint8(MAC_ADDRESS, MAC_ADDRESS_BYTE);
-    }
-};
-static MacAddressInitializer macInitializer;
-
-#endif // SECRET_H
+extern uint8_t controller_mac_addr[];
 ```
+**`src/Secret.cpp`**
+```cpp
+#include "Secret.h"
+uint8_t controller_mac_addr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // TODO:CHANGE YOUR MAC ADDRESS
+```
+
+
 
 ### 3. ビルドとアップロード
 PlatformIOのインターフェースから `Build` と `Upload` を実行してください。
